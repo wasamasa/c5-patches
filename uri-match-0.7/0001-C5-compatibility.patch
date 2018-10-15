@@ -1,0 +1,122 @@
+From be977c0836ad104c3ca7187ca7d1e0ee8500729f Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Wed, 15 Aug 2018 09:11:48 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ tests/run.scm   | 12 ++++++------
+ uri-match.egg   |  8 ++++++++
+ uri-match.meta  |  6 ------
+ uri-match.scm   | 22 ++++++++--------------
+ uri-match.setup | 12 ------------
+ 5 files changed, 22 insertions(+), 38 deletions(-)
+ create mode 100644 uri-match.egg
+ delete mode 100644 uri-match.meta
+ delete mode 100644 uri-match.setup
+
+diff --git a/tests/run.scm b/tests/run.scm
+index dec752a..04714cf 100644
+--- a/tests/run.scm
++++ b/tests/run.scm
+@@ -1,9 +1,9 @@
+-(use test
+-     uri-match
+-     srfi-1
+-     data-structures
+-     uri-common
+-     irregex)
++(import (chicken format))
++(import test)
++(import uri-match)
++(import (srfi 1))
++(import uri-common)
++(import (chicken irregex))
+ 
+ (test-group "routes creation"
+   (let ([routes (make-routes '(((/ "foo")
+diff --git a/uri-match.egg b/uri-match.egg
+new file mode 100644
+index 0000000..0f78274
+--- /dev/null
++++ b/uri-match.egg
+@@ -0,0 +1,8 @@
++((synopsis "A flexible URI matcher")
++ (dependencies uri-common)
++ (test-dependencies test)
++ (author "Moritz Heidkamp")
++ (category web)
++ (license "BSD")
++ (version "0.7")
++ (components (extension uri-match (csc-options "-O2"))))
+diff --git a/uri-match.meta b/uri-match.meta
+deleted file mode 100644
+index 4961ed0..0000000
+--- a/uri-match.meta
++++ /dev/null
+@@ -1,6 +0,0 @@
+-((synopsis "A flexible URI matcher")
+- (depends uri-common regex)
+- (test-depends test)
+- (author "Moritz Heidkamp")
+- (category web)
+- (license "BSD"))
+\ No newline at end of file
+diff --git a/uri-match.scm b/uri-match.scm
+index cebcb08..c9fdc47 100644
+--- a/uri-match.scm
++++ b/uri-match.scm
+@@ -18,19 +18,13 @@
+ (module uri-match 
+ 	(uri-match make-routes make-uri-matcher)
+ 
+-(import chicken scheme)
+-(use uri-common srfi-1 srfi-13 data-structures extras)
+-
+-(cond-expand
+- (total-irregex
+-  (require-library irregex)
+-  (import irregex))
+- (else
+-  (require-library regex)
+-  (import irregex)
+-  (define irregex-num-submatches irregex-submatches)
+-  (define (maybe-string->sre obj) 
+-    (if (string? obj) (string->sre obj) obj))))
++(import scheme)
++(import (chicken base))
++(import (chicken irregex))
++(import (chicken keyword))
++(import (srfi 1))
++(import (srfi 13))
++(import uri-common)
+ 
+ ;; Transforms something like this:
+ ;; 
+@@ -117,4 +111,4 @@
+     (lambda (method path)
+       (uri-match method path routes))))
+ 
+-)
+\ No newline at end of file
++)
+diff --git a/uri-match.setup b/uri-match.setup
+deleted file mode 100644
+index cdf7494..0000000
+--- a/uri-match.setup
++++ /dev/null
+@@ -1,12 +0,0 @@
+-(define regex-version
+-  (if (version>=? (chicken-version) "4.6.2")
+-      'total-irregex
+-      'irregex-through-regex))
+-
+-(compile -s -O2 -D ,regex-version uri-match.scm -J)
+-(compile -s -O2 uri-match.import.scm)
+-
+-(install-extension
+- 'uri-match
+- '("uri-match.so" "uri-match.import.so")
+- `((version "0.7")))
+-- 
+2.18.0
+

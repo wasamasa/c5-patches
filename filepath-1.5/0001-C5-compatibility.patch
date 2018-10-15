@@ -1,0 +1,144 @@
+From d8deacd0d5337425c00e3f2a497151938d2571d5 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Thu, 16 Aug 2018 08:52:28 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ filepath.egg   | 25 +++++++++++++++++++++++++
+ filepath.meta  | 27 ---------------------------
+ filepath.scm   | 11 ++++++++---
+ filepath.setup | 20 --------------------
+ tests/run.scm  |  5 ++++-
+ 5 files changed, 37 insertions(+), 51 deletions(-)
+ create mode 100644 filepath.egg
+ delete mode 100644 filepath.meta
+ delete mode 100644 filepath.setup
+
+diff --git a/filepath.egg b/filepath.egg
+new file mode 100644
+index 0000000..025c4b3
+--- /dev/null
++++ b/filepath.egg
+@@ -0,0 +1,25 @@
++;; -*- Hen -*-
++
++(; Your egg's license:
++
++ (license "BSD")
++
++ ; Pick one from the list of categories (see below) for your egg and
++ ; enter it here.
++
++ (category parsing)
++
++ ; A list of eggs filepath depends on.
++
++ (dependencies matchable )
++
++ (test-dependencies test)
++
++ (author "Ivan Raikov")
++
++ (synopsis "Cross-platform file path manipulation.")
++
++ (version "1.5")
++
++ (components (extension filepath (csc-options "-O" "-d2"))))
++
+diff --git a/filepath.meta b/filepath.meta
+deleted file mode 100644
+index 501c16b..0000000
+--- a/filepath.meta
++++ /dev/null
+@@ -1,27 +0,0 @@
+-;; -*- Hen -*-
+-
+-((egg "filepath.egg") ; This should never change
+-
+- ; List here all the files that should be bundled as part of your egg.  
+-
+- (files "filepath.meta" "filepath.scm" "filepath.setup" "tests")
+-
+- ; Your egg's license:
+-
+- (license "BSD")
+-
+- ; Pick one from the list of categories (see below) for your egg and
+- ; enter it here.
+-
+- (category parsing)
+-
+- ; A list of eggs filepath depends on.
+-
+- (needs matchable )
+-
+- (test-depends test)
+-
+- (author "Ivan Raikov")
+-
+- (synopsis "Cross-platform file path manipulation."))
+-
+diff --git a/filepath.scm b/filepath.scm
+index 9443c80..6d6b416 100644
+--- a/filepath.scm
++++ b/filepath.scm
+@@ -83,9 +83,14 @@
+   
+   )
+ 
+-  (import scheme chicken data-structures )
+-  (require-extension srfi-1 srfi-13 srfi-14)
+-  (require-extension matchable)
++  (import scheme)
++  (import (chicken base))
++  (import (chicken platform))
++  (import (chicken process-context))
++  (import (srfi 1))
++  (import (srfi 13))
++  (import (srfi 14))
++  (import matchable)
+ 
+ ;; Utility list procedures
+ 
+diff --git a/filepath.setup b/filepath.setup
+deleted file mode 100644
+index 869757f..0000000
+--- a/filepath.setup
++++ /dev/null
+@@ -1,20 +0,0 @@
+-;; -*- Hen -*-
+-
+-(define (dynld-name fn)		
+-  (make-pathname #f fn ##sys#load-dynamic-extension))	
+-
+-(compile -O -d2 -S -s filepath.scm -j filepath)
+-(compile -O -d2 -s filepath.import.scm)
+-
+-(install-extension
+-
+- ;; Name of your extension:
+-  'filepath
+-
+-  ;; Files to install for your extension:
+-  `(,(dynld-name "filepath") ,(dynld-name "filepath.import") )
+-
+-  ;; Assoc list with properties for your extension:
+-  '((version 1.5)
+-    ))
+-
+diff --git a/tests/run.scm b/tests/run.scm
+index 29bc30a..31bf17a 100644
+--- a/tests/run.scm
++++ b/tests/run.scm
+@@ -1,4 +1,7 @@
+-(require-extension test filepath)
++(import (chicken format))
++(import (srfi 1))
++(import test)
++(import filepath)
+ 
+ ;; test cases from Haskell implementation
+ 
+-- 
+2.18.0
+

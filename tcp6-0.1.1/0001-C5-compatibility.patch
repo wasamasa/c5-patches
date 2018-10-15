@@ -1,0 +1,95 @@
+From 01306bcfb5b78c791f1f36de861de0d240261183 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Mon, 3 Sep 2018 11:22:24 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ tcp6-mod.scm |  5 +++--
+ tcp6.egg     | 10 ++++++++++
+ tcp6.meta    |  7 -------
+ tcp6.scm     |  7 ++++---
+ tcp6.setup   |  8 --------
+ 5 files changed, 17 insertions(+), 20 deletions(-)
+ create mode 100644 tcp6.egg
+ delete mode 100644 tcp6.meta
+ delete mode 100644 tcp6.setup
+
+diff --git a/tcp6-mod.scm b/tcp6-mod.scm
+index 6642fa8..8991c82 100644
+--- a/tcp6-mod.scm
++++ b/tcp6-mod.scm
+@@ -10,7 +10,8 @@
+  tcp-port->socket
+  tcp-bind-ipv6-only)
+ 
+-(import scheme (only chicken include use))
+-(use socket)
++(import scheme)
++(import (chicken base))
++(import socket)
+ (include "tcp6.scm")
+ )
+diff --git a/tcp6.egg b/tcp6.egg
+new file mode 100644
+index 0000000..a2cad51
+--- /dev/null
++++ b/tcp6.egg
+@@ -0,0 +1,10 @@
++(
++(synopsis "Interface to TCP over IPv4 and IPv6")
++(author "Jim Ursetto")
++(dependencies socket)
++(license "BSD")
++(category net)
++(components (extension tcp6
++                       (csc-options "-O2" "-d1")
++                       (source "tcp6-mod.scm")))
++)
+diff --git a/tcp6.meta b/tcp6.meta
+deleted file mode 100644
+index 5c15269..0000000
+--- a/tcp6.meta
++++ /dev/null
+@@ -1,7 +0,0 @@
+-(
+-(synopsis "Interface to TCP over IPv4 and IPv6")
+-(author "Jim Ursetto")
+-(needs socket)
+-(license "BSD")
+-(category net)
+-)
+diff --git a/tcp6.scm b/tcp6.scm
+index 09371c5..f4a9e5b 100644
+--- a/tcp6.scm
++++ b/tcp6.scm
+@@ -34,9 +34,10 @@
+ ;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ ;; OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+-(import scheme chicken)
+-(use extras)
+-(require-library srfi-1) (import (only srfi-1 filter))
++(import scheme)
++(import (chicken base))
++(import (chicken condition))
++(import (only (srfi 1) filter))
+ 
+ (define-inline (tcp-error where msg . args)
+   (apply ##sys#signal-hook #:network-error where msg args))
+diff --git a/tcp6.setup b/tcp6.setup
+deleted file mode 100644
+index 1b59583..0000000
+--- a/tcp6.setup
++++ /dev/null
+@@ -1,8 +0,0 @@
+-;; -*- scheme -*-
+-(compile -s -O2 -d1 tcp6-mod.scm -o tcp6.so -j tcp6)
+-(compile -s -d0 tcp6.import.scm) 
+-
+-(install-extension
+- 'tcp6
+- '("tcp6.so" "tcp6.import.so")
+- '((version "0.1.1")))
+-- 
+2.18.0
+

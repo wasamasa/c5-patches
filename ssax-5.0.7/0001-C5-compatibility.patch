@@ -1,0 +1,83 @@
+From c605d6ac36a4fc64ee3b23c13802c820cc04ab75 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Tue, 14 Aug 2018 20:07:20 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ ssax-chicken.scm      | 15 ++++++++-------
+ ssax.meta => ssax.egg | 11 ++++++-----
+ ssax.setup            | 10 ----------
+ 3 files changed, 14 insertions(+), 22 deletions(-)
+ rename ssax.meta => ssax.egg (50%)
+ delete mode 100644 ssax.setup
+
+diff --git a/ssax-chicken.scm b/ssax-chicken.scm
+index f7f4881..7e5a198 100644
+--- a/ssax-chicken.scm
++++ b/ssax-chicken.scm
+@@ -11,13 +11,14 @@
+  ssax:warn
+  html-entity-unicode-chars)
+ 
+-(import (except scheme string make-string) (except chicken assert))
+-(import (prefix (only chicken assert) core:))
+-(require-extension ports)
+-(require-library extras srfi-1 srfi-13)
+-(import (except extras read-string) (except srfi-1 fold fold-right cons*))
+-(import (except srfi-13 string-null?))
+-(require-extension input-parse)
++(import (except (chicken base) assert))
++(import (prefix (only (chicken base) assert) core:))
++(import (chicken port))
++(import (chicken condition))
++(import (except scheme string make-string))
++(import (except (srfi 1) fold fold-right cons*))
++(import (except (srfi 13) string-null?))
++(import input-parse)
+ 
+ (define ucscode->char integer->char)
+ (define ascii->char integer->char)
+diff --git a/ssax.meta b/ssax.egg
+similarity index 50%
+rename from ssax.meta
+rename to ssax.egg
+index cd90093..d9acbf0 100644
+--- a/ssax.meta
++++ b/ssax.egg
+@@ -1,11 +1,12 @@
+ ;;; ssax.meta -*- Hen -*-
+ 
+-((egg "ssax.egg")
+- (synopsis "Oleg Kiselyov's XML parser")
++((synopsis "Oleg Kiselyov's XML parser")
+  (license "Public Domain")
+  (category xml)
+- (doc-from-wiki)
+- (needs input-parse)
++ (dependencies input-parse)
+  (author
+    "Oleg Kiselyov, ported to CHICKEN by Kirill Lisovsky, packaged as an extension by <a href=\"mailto:felix@call-with-current-continuation.org\">felix</a>")
+- (files "README" "ssax-chicken.scm" "look-for-str.scm" "SSAX.scm" "ssax.release-info" "myenv-chicken.scm" "ssax.setup" "ssax.meta"))
++ (version "5.0.7")
++ (components (extension ssax
++                        (csc-options "-O2" "-d1")
++                        (source "ssax-chicken.scm"))))
+diff --git a/ssax.setup b/ssax.setup
+deleted file mode 100644
+index 968a5c6..0000000
+--- a/ssax.setup
++++ /dev/null
+@@ -1,10 +0,0 @@
+-
+-(define (dynld-name fn)
+-  (make-pathname #f fn ##sys#load-dynamic-extension))
+-
+-(compile -s -O2 -d1 -o ,(dynld-name "ssax") -j ssax ssax-chicken.scm)
+-(compile -s -O2 -d0 ssax.import.scm)
+-
+-(install-extension 'ssax
+-  `(,(dynld-name "ssax") ,(dynld-name "ssax.import")) 
+-  `((version 5.0.7)))
+-- 
+2.18.0
+

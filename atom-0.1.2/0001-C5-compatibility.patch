@@ -1,0 +1,111 @@
+From 53689612a1c15ba416f5f0f626d3a3ab1ed61ee9 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Tue, 14 Aug 2018 20:53:48 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ atom.egg                 |  9 +++++++++
+ atom.meta                |  9 ---------
+ atom.scm                 | 17 ++++++++++-------
+ atom.setup               |  7 -------
+ tests/spec-brief.scm     |  2 +-
+ tests/spec-extensive.scm |  2 +-
+ 6 files changed, 21 insertions(+), 25 deletions(-)
+ create mode 100644 atom.egg
+ delete mode 100644 atom.meta
+ delete mode 100644 atom.setup
+
+diff --git a/atom.egg b/atom.egg
+new file mode 100644
+index 0000000..09cbecf
+--- /dev/null
++++ b/atom.egg
+@@ -0,0 +1,9 @@
++;; -*- scheme -*-
++
++((license "BSD")
++ (author "Jim Ursetto")
++ (synopsis "Atom 1.0 feed reader and writer")
++ (dependencies matchable ssax (sxml-serializer 0.2) regex)
++ (category xml)
++ (version "0.1.2")
++ (components (extension atom (csc-options "-O2" "-d1"))))
+diff --git a/atom.meta b/atom.meta
+deleted file mode 100644
+index f11bc62..0000000
+--- a/atom.meta
++++ /dev/null
+@@ -1,9 +0,0 @@
+-;; -*- scheme -*-
+-
+-((license "BSD")
+- (doc-from-wiki)
+- (author "Jim Ursetto")
+- (synopsis "Atom 1.0 feed reader and writer")
+- (needs matchable ssax (sxml-serializer 0.2) regex)
+- (category xml)
+- (files "atom.meta" "tests/spec-brief.scm" "tests/spec-extensive.scm" "atom.scm" "atom.setup"))
+diff --git a/atom.scm b/atom.scm
+index d4f9d28..e4de06b 100644
+--- a/atom.scm
++++ b/atom.scm
+@@ -46,13 +46,16 @@
+  write-atom-doc
+  )
+ 
+-(import scheme chicken)
+-(use ssax sxml-serializer)
+-(use (only srfi-1 filter drop-while every any))
+-(use (only srfi-13 string-concatenate))
+-(use (only data-structures ->string))
+-(use matchable)
+-(use regex) (import irregex)
++(import scheme)
++(import (chicken base))
++(import (chicken string))
++(import (chicken irregex))
++(import (chicken condition))
++(import (only (srfi 1) filter drop-while every any))
++(import (only (srfi 13) string-concatenate))
++(import ssax)
++(import sxml-serializer)
++(import matchable)
+ 
+ (define +atom-egg-version+ "0.1.1")
+ 
+diff --git a/atom.setup b/atom.setup
+deleted file mode 100644
+index 3b9fdb2..0000000
+--- a/atom.setup
++++ /dev/null
+@@ -1,7 +0,0 @@
+-(compile -s -O2 -d1 -j atom atom.scm)
+-(compile -s -O2 -d0 atom.import.scm)
+-
+-(install-extension
+- 'atom
+- '("atom.so" "atom.import.so")
+- '((version "0.1.2")))
+diff --git a/tests/spec-brief.scm b/tests/spec-brief.scm
+index c7ee051..a55c60e 100644
+--- a/tests/spec-brief.scm
++++ b/tests/spec-brief.scm
+@@ -1,4 +1,4 @@
+-(use atom)
++(import atom)
+ 
+ ;; rfc4287 brief example
+ 
+diff --git a/tests/spec-extensive.scm b/tests/spec-extensive.scm
+index 396d39a..d0f38db 100644
+--- a/tests/spec-extensive.scm
++++ b/tests/spec-extensive.scm
+@@ -1,4 +1,4 @@
+-(use atom rfc3339)
++(import atom rfc3339)
+ 
+ ;; rfc4287 extensive example
+ 
+-- 
+2.18.0
+

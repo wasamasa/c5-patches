@@ -1,0 +1,192 @@
+From 2362363447a3a3ed4bacb6c2c0b6ddb9d2184d11 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Mon, 13 Aug 2018 22:25:20 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ feature-test-syntax.scm   | 13 +++++++----
+ feature-test-syntax.setup |  9 --------
+ feature-test.egg          | 10 +++++++++
+ feature-test.meta         |  9 --------
+ feature-test.scm          | 47 ++++++++++++++++++++++-----------------
+ feature-test.setup        | 20 -----------------
+ 6 files changed, 46 insertions(+), 62 deletions(-)
+ delete mode 100644 feature-test-syntax.setup
+ create mode 100644 feature-test.egg
+ delete mode 100644 feature-test.meta
+ delete mode 100644 feature-test.setup
+
+diff --git a/feature-test-syntax.scm b/feature-test-syntax.scm
+index 15d8b3d..ddbadae 100644
+--- a/feature-test-syntax.scm
++++ b/feature-test-syntax.scm
+@@ -3,11 +3,14 @@
+ ;; always return values.  However if API were different this approach is
+ ;; not even possible.
+ 
+-(use setup-api) ;; version>=?
++(module feature-test-syntax ()
+ 
+-(let ((omit (if (version>=? (chicken-version) "4.6.7")
+-                '(##sys#values)
+-                ''(##core#undefined))))
++(import scheme)
++(import (chicken base))
++(import (chicken read-syntax))
++(import (chicken platform))
++
++(let ((omit '(##sys#values)))
+   (set-sharp-read-syntax!
+    #\+ (lambda (p) (let ((ft (read p))
+                     (body (read p)))
+@@ -32,3 +35,5 @@
+                                 ,(if (null? alt)
+                                      omit
+                                      (list 'quote (car alt))))))))))
++
++)
+diff --git a/feature-test-syntax.setup b/feature-test-syntax.setup
+deleted file mode 100644
+index 1df24a3..0000000
+--- a/feature-test-syntax.setup
++++ /dev/null
+@@ -1,9 +0,0 @@
+-;; -*- scheme -*-
+-
+-(compile -s -O2 -d0 feature-test-syntax.scm)
+-
+-(install-extension
+- 'feature-test-syntax
+- '("feature-test-syntax.scm")
+- '((version "0.1")
+- ))
+diff --git a/feature-test.egg b/feature-test.egg
+new file mode 100644
+index 0000000..8362b7e
+--- /dev/null
++++ b/feature-test.egg
+@@ -0,0 +1,10 @@
++;; -*- scheme -*-
++(
++(synopsis "Foreign feature testing")
++(author "Jim Ursetto")
++(dependencies)                  ;; I have no needs
++(license "BSD")
++(category lang-exts)
++(component-options (csc-options "-O2" "-d0"))
++(components (extension feature-test)
++            (extension feature-test-syntax)))
+diff --git a/feature-test.meta b/feature-test.meta
+deleted file mode 100644
+index 0ad79bd..0000000
+--- a/feature-test.meta
++++ /dev/null
+@@ -1,9 +0,0 @@
+-;; -*- scheme -*-
+-(
+-(synopsis "Foreign feature testing")
+-(author "Jim Ursetto")
+-(needs)                  ;; I have no needs
+-(license "BSD")
+-(category lang-exts)
+-
+- (files "feature-test-syntax.setup" "feature-test.scm" "feature-test-syntax.scm" "feature-test.setup" "feature-test.meta"))
+diff --git a/feature-test.scm b/feature-test.scm
+index 48d050e..f517bd9 100644
+--- a/feature-test.scm
++++ b/feature-test.scm
+@@ -1,24 +1,29 @@
+-
+ (module feature-test
+  ((register-foreign-features R! U!)
+   declare-foreign-features define-foreign-features
+   declaration-prefix registration-prefix)
+ 
+-(import scheme chicken)
++(import scheme)
++(import (chicken format))
++(import (chicken syntax))
++(begin-for-syntax
++ (import (chicken string))
++ (import (chicken format)))
+ 
+ (define-syntax register-foreign-feature
+-  (lambda (e r c)
+-    (let ((F (->string (cadr e))))
+-      (let ((%begin (r 'begin))
+-            (%define-foreign-variable (r 'define-foreign-variable))
+-            (%bool (r 'bool)) (%quote (r 'quote))
+-            (%if (r 'if)) (%R! (r 'R!)) (%U! (r 'U!)))
+-        (let* ((cvar (string-append *ft:declaration-prefix* F))
+-               (var (string->symbol cvar))
+-               (ft (string->symbol (string-append *ft:registration-prefix* F))))
+-          `(,%begin (,%define-foreign-variable ,var ,%bool ,cvar)
+-                    ((,%if ,var ,%R! ,%U!)
+-                     (,%quote ,ft))))))))
++  (er-macro-transformer
++   (lambda (e r c)
++     (let ((F (->string (cadr e))))
++       (let ((%begin (r 'begin))
++             (%define-foreign-variable (r 'define-foreign-variable))
++             (%bool (r 'bool)) (%quote (r 'quote))
++             (%if (r 'if)) (%R! (r 'R!)) (%U! (r 'U!)))
++         (let* ((cvar (string-append *ft:declaration-prefix* F))
++                (var (string->symbol cvar))
++                (ft (string->symbol (string-append *ft:registration-prefix* F))))
++           `(,%begin (,%define-foreign-variable ,var ,%bool ,cvar)
++                     ((,%if ,var ,%R! ,%U!)
++                      (,%quote ,ft)))))))))
+ (define-syntax declare-foreign-feature
+   (er-macro-transformer
+    (lambda (e r c)
+@@ -44,13 +49,15 @@
+                     (begin (declare-foreign-features args ...)
+                            (register-foreign-features args ...)))))
+ (define-syntax declaration-prefix
+-  (lambda (e r c)
+-    (set! *ft:declaration-prefix* (->string (cadr e)))
+-    `(,(r 'begin))))
++  (er-macro-transformer
++   (lambda (e r c)
++     (set! *ft:declaration-prefix* (->string (cadr e)))
++     `(,(r 'begin)))))
+ (define-syntax registration-prefix
+-  (lambda (e r c)
+-    (set! *ft:registration-prefix* (->string (cadr e)))
+-    `(,(r 'begin))))
++  (er-macro-transformer
++   (lambda (e r c)
++     (set! *ft:registration-prefix* (->string (cadr e)))
++     `(,(r 'begin)))))
+ 
+ (define *declaration-prefix* "HAVE_")
+ (define *registration-prefix* "")
+diff --git a/feature-test.setup b/feature-test.setup
+deleted file mode 100644
+index ffda88a..0000000
+--- a/feature-test.setup
++++ /dev/null
+@@ -1,20 +0,0 @@
+-;; -*- scheme -*-
+-
+-(compile -s -O2 -d0 feature-test.scm -j feature-test)
+-(compile -s -O2 -d0 feature-test.import.scm)
+-
+-(install-extension
+- 'feature-test
+- '("feature-test.so" "feature-test.import.so")
+- '((version "0.1")
+-   (syntax)
+-   (require-at-runtime feature-test)
+- ))
+-
+-;; deliberately skip compilation of feature-test-syntax
+-
+-(install-extension
+- 'feature-test-syntax
+- '("feature-test-syntax.scm")
+- '((version "0.1")
+- ))
+-- 
+2.18.0
+

@@ -1,0 +1,95 @@
+From e539592f7e325b1878c6bdb07ec4bcef9144dd4f Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Wed, 15 Aug 2018 21:39:35 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ aes.egg                 | 7 +++++++
+ aes.meta                | 6 ------
+ aes.scm                 | 8 ++++----
+ aes.setup               | 9 ---------
+ {test => tests}/run.scm | 5 +++--
+ 5 files changed, 14 insertions(+), 21 deletions(-)
+ create mode 100644 aes.egg
+ delete mode 100644 aes.meta
+ delete mode 100644 aes.setup
+ rename {test => tests}/run.scm (97%)
+
+diff --git a/aes.egg b/aes.egg
+new file mode 100644
+index 0000000..70a159a
+--- /dev/null
++++ b/aes.egg
+@@ -0,0 +1,7 @@
++((license "BSD")
++ (category crypt)
++ (author "Alaric Snell-Pym")
++ (synopsis "A self-contained implementation of the AES / Rijndael encryption algorithm")
++ (version "1.5")
++ (test-dependencies crypto-tools)
++ (components (extension aes (csc-options "-O2" "-d1"))))
+diff --git a/aes.meta b/aes.meta
+deleted file mode 100644
+index db16507..0000000
+--- a/aes.meta
++++ /dev/null
+@@ -1,6 +0,0 @@
+-((egg "aes.egg")
+- (files "test/run.scm" "aes.setup" "aes.release-info" "aes.scm" "aes.meta")
+- (license "BSD")
+- (category crypt)
+- (author "Alaric Snell-Pym")
+- (synopsis "A self-contained implementation of the AES / Rijndael encryption algorithm"))
+diff --git a/aes.scm b/aes.scm
+index 01cd901..ca5ba4b 100644
+--- a/aes.scm
++++ b/aes.scm
+@@ -13,10 +13,10 @@
+ ;; * Paulo Barreto paulo.barreto@terra.com.br
+ 
+ (import scheme)
+-(import chicken)
+-(import foreign)
+-
+-(use extras)
++(import (chicken base))
++(import (chicken blob))
++(import (chicken format))
++(import (chicken foreign))
+ 
+ (foreign-declare "
+ 
+diff --git a/aes.setup b/aes.setup
+deleted file mode 100644
+index 68f35d9..0000000
+--- a/aes.setup
++++ /dev/null
+@@ -1,9 +0,0 @@
+-(compile -s -O2 -d1 aes.scm -j aes)
+-(compile -s -O2 -d1 aes.import.scm)
+-(compile -c -O2 -d1 aes.scm -unit aes)
+-;
+-(install-extension
+-  'aes
+-  '("aes.o" "aes.import.so" "aes.so")
+-  '((version 1.5)
+-    (static "aes.o"))) ;; for static linking
+diff --git a/test/run.scm b/tests/run.scm
+similarity index 97%
+rename from test/run.scm
+rename to tests/run.scm
+index 34ad196..52dffd3 100644
+--- a/test/run.scm
++++ b/tests/run.scm
+@@ -1,5 +1,6 @@
+-(use aes)
+-(use crypto-tools)
++(import (chicken format))
++(import aes)
++(import crypto-tools)
+ 
+ (let*
+    ((encryptor (make-aes128-encryptor (hexstring->blob "00010203050607080A0B0C0D0F101112")))
+-- 
+2.18.0
+

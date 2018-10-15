@@ -1,0 +1,57 @@
+From 047ff8c63ef662fa3ac90887683dbb7d334f758e Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Thu, 16 Aug 2018 08:56:30 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ doctype.meta => doctype.egg | 5 ++---
+ doctype.scm                 | 3 ++-
+ doctype.setup               | 4 ----
+ 3 files changed, 4 insertions(+), 8 deletions(-)
+ rename doctype.meta => doctype.egg (61%)
+ delete mode 100644 doctype.setup
+
+diff --git a/doctype.meta b/doctype.egg
+similarity index 61%
+rename from doctype.meta
+rename to doctype.egg
+index 34b707a..02fbb18 100644
+--- a/doctype.meta
++++ b/doctype.egg
+@@ -4,7 +4,6 @@
+    "Exports strings corresponding to standard XML (XHTML, HTML) doctypes")
+  (author "Jim Ursetto")
+  (license "Public Domain")
+- (egg "doctype.egg")
+  (category xml)
+- (doc-from-wiki)
+- (files "doctype.scm" "doctype.meta" "doctype.release-info" "doctype.setup"))
++ (version "2.1")
++ (components (extension doctype (csc-options "-O2" "-d0"))))
+diff --git a/doctype.scm b/doctype.scm
+index 838d39b..21f1ba4 100644
+--- a/doctype.scm
++++ b/doctype.scm
+@@ -35,7 +35,8 @@
+    html-2.0
+ )
+ 
+-(import scheme data-structures)
++(import scheme)
++(import (chicken base))
+ 
+ ;; generic html doctype (introduced in HTML5; backward compatible with all known browsers)
+ (define doctype-html
+diff --git a/doctype.setup b/doctype.setup
+deleted file mode 100644
+index 5be7fb2..0000000
+--- a/doctype.setup
++++ /dev/null
+@@ -1,4 +0,0 @@
+-(compile -s -d0 -O2 doctype.scm -j doctype)
+-(install-extension 'doctype 
+- '("doctype.so" "doctype.import.scm")
+- '((version 2.1)))
+-- 
+2.18.0
+

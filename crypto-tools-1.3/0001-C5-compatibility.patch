@@ -1,0 +1,94 @@
+From 55a1f121b3b6af044be6c19c4d6b8b5384765c4c Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Wed, 15 Aug 2018 21:22:57 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ crypto-tools.egg        |  6 ++++++
+ crypto-tools.meta       |  6 ------
+ crypto-tools.scm        |  8 ++++++--
+ crypto-tools.setup      | 10 ----------
+ {test => tests}/run.scm |  4 +++-
+ 5 files changed, 15 insertions(+), 19 deletions(-)
+ create mode 100644 crypto-tools.egg
+ delete mode 100644 crypto-tools.meta
+ delete mode 100644 crypto-tools.setup
+ rename {test => tests}/run.scm (97%)
+
+diff --git a/crypto-tools.egg b/crypto-tools.egg
+new file mode 100644
+index 0000000..0e301dc
+--- /dev/null
++++ b/crypto-tools.egg
+@@ -0,0 +1,6 @@
++((license "BSD")
++ (category crypt)
++ (author "Alaric Snell-Pym")
++ (synopsis "Useful cryptographic primitives")
++ (version "1.3")
++ (components (extension crypto-tools (csc-options "-O2" "-d1"))))
+diff --git a/crypto-tools.meta b/crypto-tools.meta
+deleted file mode 100644
+index 2e65d03..0000000
+--- a/crypto-tools.meta
++++ /dev/null
+@@ -1,6 +0,0 @@
+-((egg "crypto-tools.egg")
+- (files "test/run.scm" "crypto-tools.setup" "crypto-tools.scm" "crypto-tools.meta" "crypto-tools.release-info")
+- (license "BSD")
+- (category crypt)
+- (author "Alaric Snell-Pym")
+- (synopsis "Useful cryptographic primitives"))
+diff --git a/crypto-tools.scm b/crypto-tools.scm
+index 0a61f00..e6947c7 100644
+--- a/crypto-tools.scm
++++ b/crypto-tools.scm
+@@ -5,8 +5,12 @@
+  make-cbc*-encryptor make-cbc*-decryptor)
+ 
+ (import scheme)
+-(import chicken foreign)
+-(use extras lolevel)
++(import (chicken foreign))
++(import (chicken base))
++(import (chicken blob))
++(import (chicken format))
++(import (chicken memory))
++(import (chicken locative))
+ 
+ (define *the-null-blob* (make-blob 0))
+ 
+diff --git a/crypto-tools.setup b/crypto-tools.setup
+deleted file mode 100644
+index 42e2d6b..0000000
+--- a/crypto-tools.setup
++++ /dev/null
+@@ -1,10 +0,0 @@
+-(compile -s -O2 -d1 crypto-tools.scm -j crypto-tools)
+-(compile -s -O2 -d1 crypto-tools.import.scm)
+-(compile -c -O2 -d1 crypto-tools.scm -unit crypto-tools)
+-
+-(install-extension
+-  'crypto-tools
+-  '( "crypto-tools.so" "crypto-tools.import.so" )
+-  '((version 1.3)
+-    (static "crypto-tools.o") ;; for static linking
+-    (documentation "crypto-tools.html")))
+diff --git a/test/run.scm b/tests/run.scm
+similarity index 97%
+rename from test/run.scm
+rename to tests/run.scm
+index 528461e..d9aa8ea 100644
+--- a/test/run.scm
++++ b/tests/run.scm
+@@ -1,4 +1,6 @@
+-(use crypto-tools)
++(import (chicken format))
++(import (chicken blob))
++(import crypto-tools)
+ 
+ (define hexstring1 (blob->hexstring (hexstring->blob "0123456789ABCDEF")))
+ (printf "Hex1: ~A\n" hexstring1)
+-- 
+2.18.0
+

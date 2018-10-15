@@ -1,0 +1,103 @@
+From 85adaf3d2bd77a4cb64351743dfef0083df5575f Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Sun, 12 Aug 2018 00:58:59 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ build-imlib2     |  1 +
+ build-imlib2.bat |  2 ++
+ imlib2.egg       | 10 ++++++++++
+ imlib2.meta      | 10 ----------
+ imlib2.scm       |  9 +++++++--
+ imlib2.setup     |  8 --------
+ 6 files changed, 20 insertions(+), 20 deletions(-)
+ create mode 100755 build-imlib2
+ create mode 100644 build-imlib2.bat
+ create mode 100644 imlib2.egg
+ delete mode 100644 imlib2.meta
+ delete mode 100644 imlib2.setup
+
+diff --git a/build-imlib2 b/build-imlib2
+new file mode 100755
+index 0000000..92aad85
+--- /dev/null
++++ b/build-imlib2
+@@ -0,0 +1 @@
++"$CHICKEN_CSC" -O2 -d0 -C "$(imlib2-config --cflags)" -C -DX_DISPLAY_MISSING -C "$CFLAGS" -L "$(imlib2-config --libs)" -L "$LDFLAGS" "$@"
+diff --git a/build-imlib2.bat b/build-imlib2.bat
+new file mode 100644
+index 0000000..f92529f
+--- /dev/null
++++ b/build-imlib2.bat
+@@ -0,0 +1,2 @@
++@echo off
++%CHICKEN_CSC% -O2 -d0 -C -DX_DISPLAY_MISSING -C %CFLAGS% -L %LDFLAGS% %*
+diff --git a/imlib2.egg b/imlib2.egg
+new file mode 100644
+index 0000000..a6aafc1
+--- /dev/null
++++ b/imlib2.egg
+@@ -0,0 +1,10 @@
++;;; imlib2.meta -*- Hen -*-
++
++((synopsis "Chicken bindings for the Imlib2 image library")
++ (author "Peter Bex")
++ (maintainer "Moritz Heidkamp")
++ (dependencies foreigners)
++ (category graphics)
++ (license "BSD")
++ (components (extension imlib2 (custom-build "build-imlib2"))))
++
+diff --git a/imlib2.meta b/imlib2.meta
+deleted file mode 100644
+index 76dfb40..0000000
+--- a/imlib2.meta
++++ /dev/null
+@@ -1,10 +0,0 @@
+-;;; imlib2.meta -*- Hen -*-
+-
+-((egg "imlib2.egg")
+- (synopsis "Chicken bindings for the Imlib2 image library")
+- (author "Peter Bex")
+- (maintainer "Moritz Heidkamp")
+- (needs foreigners)
+- (category graphics)
+- (license "BSD")
+- (files "imlib2.scm" "imlib2.setup" "imlib2.release-info" "imlib2.meta"))
+diff --git a/imlib2.scm b/imlib2.scm
+index 23f0abd..051f490 100644
+--- a/imlib2.scm
++++ b/imlib2.scm
+@@ -53,8 +53,13 @@
+    image-fill-rectangle image-draw-ellipse image-fill-ellipse
+    font-load make-image image-ptr gc-collect-image)
+ 
+-(import chicken scheme foreign)
+-(use foreigners)
++(import scheme
++        (chicken base)
++        (chicken foreign)
++        (chicken format)
++        (chicken condition)
++        (chicken gc)
++        foreigners)
+ 
+ (declare (disable-interrupts))
+ 
+diff --git a/imlib2.setup b/imlib2.setup
+deleted file mode 100644
+index 7bd0e10..0000000
+--- a/imlib2.setup
++++ /dev/null
+@@ -1,8 +0,0 @@
+-(compile -s -O2 -d0 imlib2.scm -L "\"`imlib2-config --libs`\"" -C "\"`imlib2-config --cflags`\"" -C -DX_DISPLAY_MISSING -j imlib2)
+-
+-(compile -s -O2 imlib2.import.scm)
+-
+-(install-extension 'imlib2
+-  '("imlib2.so" "imlib2.import.so")
+-  `((version "0.18")
+-    (documentation "imlib2.html") ) )
+-- 
+2.18.0
+

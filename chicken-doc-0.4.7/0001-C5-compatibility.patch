@@ -1,0 +1,205 @@
+From 642232bfda28b843ed5293c8a84777c10437c5a0 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Wed, 15 Aug 2018 08:36:32 +0200
+Subject: [PATCH] C5 compatibility
+
+---
+ chicken-doc-cmd.scm  | 20 ++++++++++++++------
+ chicken-doc-text.scm | 16 +++++++++-------
+ chicken-doc.egg      | 14 ++++++++++++++
+ chicken-doc.meta     | 10 ----------
+ chicken-doc.scm      | 29 ++++++++++++++++++++++-------
+ chicken-doc.setup    | 17 -----------------
+ 6 files changed, 59 insertions(+), 47 deletions(-)
+ create mode 100644 chicken-doc.egg
+ delete mode 100644 chicken-doc.meta
+ delete mode 100644 chicken-doc.setup
+
+diff --git a/chicken-doc-cmd.scm b/chicken-doc-cmd.scm
+index 77c95cb..d96ec52 100644
+--- a/chicken-doc-cmd.scm
++++ b/chicken-doc-cmd.scm
+@@ -1,8 +1,15 @@
+-(require-library chicken-doc)
+-(import chicken-doc (only chicken-doc-text chicken-doc-ansi-colors))
+-(require-library posix)
+-(import (only posix with-output-to-pipe setenv))
+-(use regex) (import irregex)
++(module chicken-doc-cmd ()
++(import scheme)
++(import (chicken base))
++(import (chicken port))
++(import (chicken process))
++(import (chicken process-context))
++(import (chicken platform))
++(import (chicken condition))
++(import (chicken irregex))
++(import regex)
++(import chicken-doc)
++(import (only chicken-doc-text chicken-doc-ansi-colors))
+ 
+ ;;; Usage
+ 
+@@ -59,7 +66,7 @@
+          (thunk))  ; Don't page if stdout is not a TTY.
+         (else
+          (unless (get-environment-variable "LESS")
+-           (setenv "LESS" "FRXis"))  ; Default 'less' options
++           (set-environment-variable! "LESS" "FRXis"))  ; Default 'less' options
+          (let ((pager (or (get-environment-variable "CHICKEN_DOC_PAGER")
+                           (get-environment-variable "PAGER")
+                           *default-pager*
+@@ -157,3 +164,4 @@
+                      (if (null? (cdr ids))
+                          (doc-dwim (car ids))
+                          (doc-dwim ids))))))))))
++)
+diff --git a/chicken-doc-text.scm b/chicken-doc-text.scm
+index c856f85..414275b 100644
+--- a/chicken-doc-text.scm
++++ b/chicken-doc-text.scm
+@@ -1,13 +1,15 @@
+ (module chicken-doc-text (write-sxml-as-text
+                           chicken-doc-ansi-colors)
+ 
+-(import scheme chicken)
+-(use fmt fmt-unicode)
+-(use sxml-transforms)
+-(use matchable)
+-(use data-structures srfi-13 ports)
+-(require-library srfi-1)
+-(import (only srfi-1 filter-map reduce make-list))
++(import scheme)
++(import (chicken base))
++(import (chicken string))
++(import (chicken port))
++(import fmt fmt-unicode)
++(import sxml-transforms)
++(import matchable)
++(import (only (srfi 1) filter-map reduce make-list))
++(import (srfi 13))
+ 
+ (define chicken-doc-ansi-colors (make-parameter #f))
+ 
+diff --git a/chicken-doc.egg b/chicken-doc.egg
+new file mode 100644
+index 0000000..4a26f62
+--- /dev/null
++++ b/chicken-doc.egg
+@@ -0,0 +1,14 @@
++((synopsis "Explore Chicken documentation locally")
++ (author "Jim Ursetto")
++ (category doc-tools)
++ (license "BSD")
++ (dependencies matchable regex
++               (fmt 0.706)
++               sxml-transforms) ; chicken-doc-text
++ (component-options (csc-options "-O2" "-d1"))
++ (components (extension chicken-doc
++                        (component-dependencies chicken-doc-text))
++             (extension chicken-doc-text)
++             (program chicken-doc-cmd
++                      (install-name "chicken-doc")
++                      (component-dependencies chicken-doc))))
+diff --git a/chicken-doc.meta b/chicken-doc.meta
+deleted file mode 100644
+index f87b26a..0000000
+--- a/chicken-doc.meta
++++ /dev/null
+@@ -1,10 +0,0 @@
+-((egg "chicken-doc.egg")
+- (synopsis "Explore Chicken documentation locally")
+- (author "Jim Ursetto")
+- (category doc-tools)
+- (license "BSD")
+- (doc-from-wiki)
+- (needs matchable regex
+-        (fmt 0.706) sxml-transforms ; chicken-doc-text
+-        )
+- )
+diff --git a/chicken-doc.scm b/chicken-doc.scm
+index 2e32743..5e34b23 100644
+--- a/chicken-doc.scm
++++ b/chicken-doc.scm
+@@ -1,7 +1,5 @@
+ ;;; chicken-doc
+ 
+-(include "chicken-doc-text.scm") ; local module
+-
+ (module chicken-doc
+ ;; Used by chicken-doc command
+ (verify-repository
+@@ -43,10 +41,26 @@
+  chicken-doc-warnings
+  )
+ 
+-(import scheme chicken)
+-(use matchable regex srfi-13 posix data-structures srfi-69 extras files utils srfi-1)
+-(import irregex)
+-(import (only csi toplevel-command))
++(import scheme)
++(import (chicken base))
++(import (chicken platform))
++(import (chicken gc))
++(import (chicken process-context))
++(import (chicken fixnum))
++(import (chicken file))
++(import (chicken file posix))
++(import (chicken pathname))
++(import (chicken io))
++(import (chicken string))
++(import (chicken irregex))
++(import (chicken condition))
++(import (chicken format))
++(import (chicken sort))
++(import (srfi 1))
++(import (srfi 13))
++(import (srfi 69))
++(import regex)
++(import matchable)
+ (import chicken-doc-text)
+ 
+ ;;; Config
+@@ -258,7 +272,7 @@
+ (define (read-path-metadata pathname)
+   (let ((metafile (pathname+field->pathname pathname 'meta)))
+     (cond ((file-exists? metafile)
+-           (call-with-input-file* metafile read-file)) ;; ensure binary read
++           (call-with-input-file* metafile read-list)) ;; ensure binary read
+           ((directory? pathname)
+            ;; write-keys may create intermediate container directories
+            ;; without metadata, so handle this specially.
+@@ -834,6 +848,7 @@
+     (search-only (irregex re))))
+ 
+ (when (feature? 'csi)
++  (import (chicken csi))
+   ;; Warning -- will execute if called from a script.
+   ;; We really only want this to execute at the REPL.
+   (verify-repository)
+diff --git a/chicken-doc.setup b/chicken-doc.setup
+deleted file mode 100644
+index a72149e..0000000
+--- a/chicken-doc.setup
++++ /dev/null
+@@ -1,17 +0,0 @@
+-(define version "0.4.7")
+-
+-(compile -s -O2 -d1 -S chicken-doc.scm -j chicken-doc -j chicken-doc-text)
+-(compile -s -O2 -d0 chicken-doc.import.scm)
+-(compile -s -O2 -d0 chicken-doc-text.import.scm)    ; annoying
+-(compile -o chicken-doc -O2 -d1 -S chicken-doc-cmd.scm)
+-
+-(install-extension
+-  'chicken-doc
+-  '("chicken-doc.so" "chicken-doc.import.so" "chicken-doc-text.import.so")
+-  `((version ,version)
+-    (documentation "chicken-doc.html")))
+-
+-(install-program
+- 'chicken-doc-cmd
+- '("chicken-doc")
+- `((version ,version)))
+-- 
+2.18.0
+

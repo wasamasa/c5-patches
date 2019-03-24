@@ -1,0 +1,72 @@
+# HG changeset patch
+# User Vasilij Schneidermann <mail@vasilij.de>
+# Date 1553438535 -3600
+#      Sun Mar 24 15:42:15 2019 +0100
+# Node ID 6dcd5af0f300263ce1c63e7028d9aba31837215f
+# Parent  8382218f273ec8cfdd0e5b3c75148f10701a474e
+C5 compatibility
+
+diff --git a/build b/build
+new file mode 100755
+--- /dev/null
++++ b/build
+@@ -0,0 +1,7 @@
++#!/bin/bash
++platform=$("$CHICKEN_CSI" -R chicken.platform -p '(software-version)')
++if [[ "$platform" = linux ]]; then
++    "$CHICKEN_CSC" -d0 -O2 -L -lrt "$@"
++else
++    "$CHICKEN_CSC" -d0 -O2 "$@"
++fi
+diff --git a/build.bat b/build.bat
+new file mode 100644
+--- /dev/null
++++ b/build.bat
+@@ -0,0 +1,2 @@
++@echo off
++%CHICKEN_CSC% -d0 -O2 %*
+diff --git a/micro-benchmark.egg b/micro-benchmark.egg
+new file mode 100644
+--- /dev/null
++++ b/micro-benchmark.egg
+@@ -0,0 +1,6 @@
++((synopsis "easily create micro-benchmarks")
++ (author "David Krentzlin")
++ (category misc)
++ (license "GPLv3")
++ (test-dependencies test)
++ (components (extension micro-benchmark (custom-build "build"))))
+diff --git a/micro-benchmark.scm b/micro-benchmark.scm
+--- a/micro-benchmark.scm
++++ b/micro-benchmark.scm
+@@ -1,8 +1,17 @@
+ (module micro-benchmark
+   (benchmark-measure benchmark-run %gettime/microsecs current-benchmark-iterations generate-statistics (benchmark-ips benchmark-ips*))
+ 
+-  (import chicken scheme foreign)
+-  (use (only srfi-1 fold list-tabulate))
++  (import scheme)
++  (cond-expand
++   (chicken-4
++    (import chicken foreign)
++    (use (only srfi-1 fold list-tabulate)))
++   (chicken-5
++    (import (chicken base))
++    (import (chicken fixnum))
++    (import (chicken foreign))
++    (import (chicken time))
++    (import (only (srfi 1) fold list-tabulate))))
+ 
+   (cond-expand
+    ((or netbsd openbsd freebsd linux)
+diff --git a/tests/run.scm b/tests/run.scm
+--- a/tests/run.scm
++++ b/tests/run.scm
+@@ -1,4 +1,6 @@
+-(use test micro-benchmark posix)
++(import scheme)
++(import test)
++(import micro-benchmark)
+ 
+ (test-begin "micro-benchmark")
+ 

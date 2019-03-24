@@ -1,0 +1,94 @@
+From e0c073092071a320f611a940907a80e44215c995 Mon Sep 17 00:00:00 2001
+From: Vasilij Schneidermann <mail@vasilij.de>
+Date: Sun, 24 Mar 2019 23:54:02 +0100
+Subject: [PATCH] C5 compatibility
+
+---
+ henrietta.egg |  7 ++++---
+ henrietta.scm | 46 ++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 46 insertions(+), 7 deletions(-)
+
+diff --git a/henrietta.egg b/henrietta.egg
+index a129af5..435310a 100644
+--- a/henrietta.egg
++++ b/henrietta.egg
+@@ -2,8 +2,9 @@
+ 
+ ((synopsis "Serve extensions over HTTP")
+  (category egg-tools)
+- (doc-from-wiki)
+  (author "felix winkelmann")
+- (depends (chicken "4.5.8") regex)
++ (dependencies regex)
+  (license "BSD")
+- (files "henrietta.release-info" "henrietta.setup" "henrietta.scm" "henrietta.meta"))
++ (components (extension henrietta
++                        (csc-options "-O3" "-d0")
++                        (modules main))))
+diff --git a/henrietta.scm b/henrietta.scm
+index 52242b2..992348c 100644
+--- a/henrietta.scm
++++ b/henrietta.scm
+@@ -41,9 +41,47 @@
+ 
+ (module main ()
+ 
+-  (import scheme chicken)
+-  (use regex extras utils ports srfi-1 posix files
+-       data-structures (only setup-api version>=?))
++  (import scheme)
++  (cond-expand
++   (chicken-4
++    (import chicken)
++    (use regex extras utils ports srfi-1 posix files
++         data-structures (only setup-api version>=?)))
++   (chicken-5
++    (import (chicken base))
++    (import (chicken condition))
++    (import (chicken file))
++    (import (chicken file posix))
++    (import (chicken format))
++    (import (chicken io))
++    (import (chicken irregex))
++    (import (chicken pathname))
++    (import (chicken pretty-print))
++    (import (chicken process-context))
++    (import (chicken sort))
++    (import (chicken string))
++    (import regex)
++    (import (srfi 1))
++
++   ;; From setup-api.scm
++   (define (version>=? v1 v2)
++     (define (version->list v)
++       (map (lambda (x) (or (string->number x) x))
++            (irregex-split "[-\\._]" (->string v))))
++     (let loop ((p1 (version->list v1))
++                (p2 (version->list v2)))
++       (cond ((null? p1) (null? p2))
++             ((null? p2))
++             ((number? (car p1))
++              (and (number? (car p2))
++                   (or (> (car p1) (car p2))
++                       (and (= (car p1) (car p2))
++                            (loop (cdr p1) (cdr p2))))))
++             ((number? (car p2)))
++             ((string>? (car p1) (car p2)))
++             (else
++              (and (string=? (car p1) (car p2))
++                   (loop (cdr p1) (cdr p2)))))))))
+ 
+   (define *default-location* (current-directory))
+   (define *tests* #f)
+@@ -138,7 +176,7 @@
+ 		       (else
+ 			(print "\n#|-------------------- " ver " |# \"" pf "\" " 
+ 			       (file-size ff))
+-			(display (read-all ff)))))))
++			(display (call-with-input-file ff (cut read-string #f <>))))))))
+ 	   files)))))
+ 
+   (define (egg-listing release)
+-- 
+2.21.0
+

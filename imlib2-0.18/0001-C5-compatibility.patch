@@ -1,16 +1,16 @@
-From 85adaf3d2bd77a4cb64351743dfef0083df5575f Mon Sep 17 00:00:00 2001
+From 3d4b58e80854ebca48edc55f01eb007c4d8051ee Mon Sep 17 00:00:00 2001
 From: Vasilij Schneidermann <mail@vasilij.de>
-Date: Sun, 12 Aug 2018 00:58:59 +0200
+Date: Tue, 26 Mar 2019 08:59:13 +0100
 Subject: [PATCH] C5 compatibility
 
 ---
- build-imlib2     |  1 +
+ build-imlib2     |  2 ++
  build-imlib2.bat |  2 ++
  imlib2.egg       | 10 ++++++++++
  imlib2.meta      | 10 ----------
  imlib2.scm       |  9 +++++++--
  imlib2.setup     |  8 --------
- 6 files changed, 20 insertions(+), 20 deletions(-)
+ 6 files changed, 21 insertions(+), 20 deletions(-)
  create mode 100755 build-imlib2
  create mode 100644 build-imlib2.bat
  create mode 100644 imlib2.egg
@@ -19,10 +19,11 @@ Subject: [PATCH] C5 compatibility
 
 diff --git a/build-imlib2 b/build-imlib2
 new file mode 100755
-index 0000000..92aad85
+index 0000000..ec7d48c
 --- /dev/null
 +++ b/build-imlib2
-@@ -0,0 +1 @@
+@@ -0,0 +1,2 @@
++#!/bin/sh
 +"$CHICKEN_CSC" -O2 -d0 -C "$(imlib2-config --cflags)" -C -DX_DISPLAY_MISSING -C "$CFLAGS" -L "$(imlib2-config --libs)" -L "$LDFLAGS" "$@"
 diff --git a/build-imlib2.bat b/build-imlib2.bat
 new file mode 100644
@@ -37,7 +38,7 @@ new file mode 100644
 index 0000000..a6aafc1
 --- /dev/null
 +++ b/imlib2.egg
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,9 @@
 +;;; imlib2.meta -*- Hen -*-
 +
 +((synopsis "Chicken bindings for the Imlib2 image library")
@@ -47,7 +48,6 @@ index 0000000..a6aafc1
 + (category graphics)
 + (license "BSD")
 + (components (extension imlib2 (custom-build "build-imlib2"))))
-+
 diff --git a/imlib2.meta b/imlib2.meta
 deleted file mode 100644
 index 76dfb40..0000000
@@ -65,7 +65,7 @@ index 76dfb40..0000000
 - (license "BSD")
 - (files "imlib2.scm" "imlib2.setup" "imlib2.release-info" "imlib2.meta"))
 diff --git a/imlib2.scm b/imlib2.scm
-index 23f0abd..051f490 100644
+index 23f0abd..affaf11 100644
 --- a/imlib2.scm
 +++ b/imlib2.scm
 @@ -53,8 +53,13 @@
@@ -74,13 +74,13 @@ index 23f0abd..051f490 100644
  
 -(import chicken scheme foreign)
 -(use foreigners)
-+(import scheme
-+        (chicken base)
-+        (chicken foreign)
-+        (chicken format)
-+        (chicken condition)
-+        (chicken gc)
-+        foreigners)
++(import scheme)
++(import (chicken base))
++(import (chicken foreign))
++(import (chicken format))
++(import (chicken condition))
++(import (chicken gc))
++(import foreigners)
  
  (declare (disable-interrupts))
  
@@ -99,5 +99,5 @@ index 7bd0e10..0000000
 -  `((version "0.18")
 -    (documentation "imlib2.html") ) )
 -- 
-2.18.0
+2.21.0
 

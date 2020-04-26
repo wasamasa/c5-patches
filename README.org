@@ -1,4 +1,1 @@
-Here's a list of C5 compatibility patches that are still in limbo,
-with each directory designating the egg and the fetched version I've
-patched.  This list will get updated as soon as new eggs show up on
-the [[http://wiki.call-cc.org/chicken-projects/egg-index-5.html][C5 egg index]].
+Moved to https://depp.brause.cc/c5-patches/
